@@ -17,8 +17,8 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 public class Shooter {
     public enum Mode { OFF, IDLE, SHOOT }
 
-    /** 앞으로 쏠 때 Hardware Check에서 속도가 음수로 나오면 true. */
-    public static boolean REVERSED = false;
+    /** 앞으로 쏠 때 Hardware Check에서 속도가 음수로 나오면 true. 25323: B(−)가 쏘는 방향, 속도 음수 → true (11/21). */
+    public static boolean REVERSED = true;
     /** 발사 속도 (ticks/s). 최고 약 2800. */
     public static double SHOOT_VELOCITY = 1500;
     /** 평소 예열 속도 (ticks/s). 발사 버튼을 누르면 SHOOT_VELOCITY까지 빨리 올라간다. */

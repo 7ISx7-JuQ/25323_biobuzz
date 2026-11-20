@@ -15,10 +15,14 @@ import org.firstinspires.ftc.teamcode.pedro.Constants;
  */
 @Configurable
 public class Drive {
-    /** 허브 로고가 향하는 방향. 허브를 로봇에 단 모양에 맞출 것 (Hardware Check의 IMU 화면으로 확인). */
-    public static RevHubOrientationOnRobot.LogoFacingDirection HUB_LOGO = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-    /** 허브 USB 포트가 향하는 방향. */
-    public static RevHubOrientationOnRobot.UsbFacingDirection HUB_USB = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+    /**
+     * 허브 로고가 향하는 방향. 25323은 Control Hub를 로봇 왼쪽 옆면에 세워서 달았고,
+     * 로고 면이 바깥(왼쪽)을 본다 (2026-11-21 사진 확인).
+     * 확인: Hardware Check에서 평평할 때 pitch·roll ≈ 0, 반시계로 돌리면 yaw 증가.
+     */
+    public static RevHubOrientationOnRobot.LogoFacingDirection HUB_LOGO = RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
+    /** 허브 USB 포트가 향하는 방향. 25323은 USB 쪽 끝이 로봇 뒤를 본다. */
+    public static RevHubOrientationOnRobot.UsbFacingDirection HUB_USB = RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD;
 
     /** 옆으로 갈 때 덜 가는 것 보정 (메카넘 특성). 1.0 = 보정 없음. */
     public static double STRAFE_CORRECTION = 1.1;

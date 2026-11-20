@@ -12,8 +12,8 @@ import com.qualcomm.robotcore.hardware.Servo;
  */
 @Configurable
 public class Intake {
-    /** 공을 빨아들일 때 Hardware Check에서 반대로 돌면 true. */
-    public static boolean REVERSED = false;
+    /** 공을 빨아들일 때 Hardware Check에서 반대로 돌면 true. 25323: Hardware Check에서 B(−)가 빨아들임 → true (11/21). */
+    public static boolean REVERSED = true;
     /** 공 줍기 파워 (0~1). */
     public static double INTAKE_POWER = 0.8;
     /** 공 뱉기 파워 (음수). */
@@ -21,9 +21,9 @@ public class Intake {
     /** 발사할 때 슈터로 밀어 넣는 파워. */
     public static double FEED_POWER = 0.7;
 
-    /** 블로커 열림/닫힘 위치 (0~1, 300° 서보라 0.01 ≈ 3°). */
-    public static double BLOCKER_OPEN = 0.6;
-    public static double BLOCKER_CLOSED = 0.4;
+    /** 블로커 열림/닫힘 위치 (0~1, 300° 서보라 0.01 ≈ 3°). 2026-11-21 Hardware Check 측정 (여유 있게 잡은 값). */
+    public static double BLOCKER_OPEN = 0.700;
+    public static double BLOCKER_CLOSED = 0.500;
 
     private final DcMotor motor;
     private final Servo blocker;

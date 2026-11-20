@@ -22,13 +22,14 @@ import org.firstinspires.ftc.teamcode.robot.Wedge;
  *   SHARE          필드 기준 ↔ 로봇 기준 주행 바꾸기 (IMU가 이상할 때 비상용)
  *
  * gamepad2 (오퍼레이터)
- *   RT 누르고 있기 발사: 블로커 열림 + 슈터 가속 → 속도 도달하면 인테이크가 공을 밀어 넣음 → 놓으면 정지
+ *   RT 누르고 있기 발사: 블로커 열림 + 쐐기 발사 위치 + 슈터 가속 → 속도 도달하면 인테이크가 공을 밀어 넣음
+ *                  → 놓으면 정지, 쐐기는 발사 전 상태로 돌아감
  *   A / B          인테이크 줍기 / 뱉기 (누르는 동안)
  *   D-pad 좌 / 우  블로커 열기 / 닫기
- *   D-pad 상 / 하  쐐기 내밀기 / 접기
+ *   D-pad 상 / 하  쐐기 한 단계 내밀기 / 접기 (높게 접음 ↔ 낮게 접음(발사) ↔ 내밂(빼오기))
  *   오른쪽 스틱 X  터렛 돌리기
  *   LB / RB        터렛 천천히 왼쪽 / 오른쪽 (누르는 동안)
- *   X              터렛 가운데(0°)로 복귀 (피드백 선 + 기어비가 있을 때만. 스틱 움직이면 취소)
+ *   X              터렛 가운데(인테이크 방향)로 복귀
  *   Y              슈터 예열 켜기/끄기 (기본 켜짐)
  * </pre>
  */
@@ -47,12 +48,15 @@ public class MainTeleOp extends LinearOpMode {
         Turret turret = new Turret(hardwareMap);
 
         telemetry.addLine("준비 완료. 로봇을 경기장 안쪽(앞)으로 향하게 놓고 START.");
-        if (turret.hasFeedback()) telemetry.addLine("터렛을 가운데(인테이크 방향)에 맞춘 상태에서 INIT 했는지 확인.");
+        if (Turret.POSITION_MODE) telemetry.addLine("START 하면 터렛이 가운데로, 쐐기가 높게 접은 위치로 움직임. 주변 확인.");
+        else if (turret.hasFeedback()) telemetry.addLine("터렛을 가운데(인테이크 방향)에 맞춘 상태에서 INIT 했는지 확인.");
         telemetry.update();
         waitForStart();
 
         drive.resetHeading();
         intake.closeBlocker();
+        wedge.set(Wedge.State.STOW);
+        Wedge.State wedgeBeforeShot = null;
         boolean preheat = true;
         boolean wasShooting = false;
         boolean feeding = false;
@@ -70,12 +74,17 @@ public class MainTeleOp extends LinearOpMode {
             if (shooting) {
                 if (!wasShooting) {
                     intake.openBlocker();
+                    wedgeBeforeShot = wedge.state();
+                    wedge.set(Wedge.State.SHOOT);
                     feeding = false;
                 }
                 shooter.setMode(Shooter.Mode.SHOOT);
                 if (!feeding && shooter.atShootSpeed()) feeding = true;   // 한 번 도달하면 놓을 때까지 계속 급탄
             } else {
-                if (wasShooting) intake.closeBlocker();
+                if (wasShooting) {
+                    intake.closeBlocker();
+                    if (wedgeBeforeShot != null) wedge.set(wedgeBeforeShot);
+                }
                 feeding = false;
                 shooter.setMode(preheat ? Shooter.Mode.IDLE : Shooter.Mode.OFF);
             }
@@ -91,8 +100,8 @@ public class MainTeleOp extends LinearOpMode {
             // ── 블로커·쐐기 수동 ──
             if (gamepad2.dpadLeftWasPressed()) intake.openBlocker();
             if (gamepad2.dpadRightWasPressed()) intake.closeBlocker();
-            if (gamepad2.dpadUpWasPressed()) wedge.extend();
-            if (gamepad2.dpadDownWasPressed()) wedge.retract();
+            if (gamepad2.dpadUpWasPressed()) wedge.stepOut();
+            if (gamepad2.dpadDownWasPressed()) wedge.stepIn();
 
             // ── 터렛 ──
             if (gamepad2.xWasPressed()) turret.center();
@@ -104,8 +113,11 @@ public class MainTeleOp extends LinearOpMode {
             telemetry.addData("슈터", "%.0f / %.0f  %s  (예열 %s)", shooter.velocity(), shooter.targetVelocity(),
                     shooting ? (feeding ? "급탄 중" : "가속 중") : "-", preheat ? "켜짐" : "꺼짐");
             telemetry.addData("블로커", intake.blockerOpen() ? "열림" : "닫힘");
-            telemetry.addData("쐐기", wedge.isExtended() ? "내밂" : "접음");
-            if (turret.angleKnown()) {
+            telemetry.addData("쐐기", Wedge.label(wedge.state()));
+            if (Turret.POSITION_MODE) {
+                telemetry.addData("터렛", "위치 %.3f  (가운데 %.3f, 범위 %.3f~%.3f) %s", turret.targetPosition(),
+                        Turret.CENTER_POS, Turret.MIN_POS, Turret.MAX_POS, turret.atLimit() ? "■ 끝" : "");
+            } else if (turret.angleKnown()) {
                 telemetry.addData("터렛", "%.1f°  파워 %.2f  %s%s", turret.angleDeg(), turret.power(),
                         turret.isCentering() ? "가운데로 복귀 중 " : "", turret.atLimit() ? "■ 한계각" : "");
             } else {

@@ -12,7 +12,9 @@ import org.firstinspires.ftc.teamcode.robot.Shooter;
 import org.firstinspires.ftc.teamcode.robot.Turret;
 
 /**
- * 비상용 오토: Pedro 튜닝이 안 끝났을 때 쓴다. 위치 센서 없이 "시간"으로만 움직인다.
+ * 25323 대회용 오토 (주차만). 위치 센서 없이 "시간 × 파워"로만 움직인다.
+ * 2026-11-21: Pinpoint 좌우 데드휠 고장(여분 없음) → Pedro 경로 오토는 포기하고 이것을 쓰기로 함.
+ * 기본값은 발사 없이 주차만 한다 (SHOOT_PRELOAD = false).
  *
  * <pre>
  * 1) (SHOOT_PRELOAD 면) 그 자리에서 미리 실은 공 발사: 슈터 가속 → 블로커 열고 FEED_TIME_S 동안 급탄
@@ -21,13 +23,14 @@ import org.firstinspires.ftc.teamcode.robot.Turret;
  * </pre>
  *
  * 모든 값은 Panels에서 바꿀 수 있다. 연습장에서 몇 번 돌려 보고 시간·파워를 맞출 것.
- * 배터리 전압에 따라 가는 거리가 조금씩 달라진다.
+ * Panels에서 바꾼 값은 앱을 다시 켜면 사라지므로, 맞춘 값은 반드시 이 파일의 숫자로 옮겨 적을 것.
+ * 배터리 전압에 따라 가는 거리가 조금씩 달라진다 → 충전된 배터리로 맞추고, 경기에도 충전된 배터리를 쓸 것.
  */
 @Configurable
-@Autonomous(name = "Backup Auto (시간)", group = "Competition")
+@Autonomous(name = "Park Auto (시간)", group = "Competition")
 public class BackupAuto extends LinearOpMode {
-    /** true 면 시작하자마자 미리 실은 공을 쏜다. */
-    public static boolean SHOOT_PRELOAD = true;
+    /** true 면 시작하자마자 미리 실은 공을 쏜다. 지금은 주차만 하기로 해서 false. */
+    public static boolean SHOOT_PRELOAD = false;
     /** 슈터가 속도에 못 도달해도 이 시간(초)이 지나면 그냥 쏜다. */
     public static double SPINUP_TIMEOUT_S = 3.0;
     /** 급탄 시간(초). 공 전부 나갈 만큼. */

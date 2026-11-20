@@ -19,7 +19,8 @@ dependencies {
     implementation 'com.pedropathing:revhub:3.0.2'
     implementation 'com.pedropathing:tuning:1.0.3'
     implementation 'com.pedropathing.ivy:pedro:1.1.1'
-    implementation 'dev.nextftc.v2:robot:0.3.0'
+    // NextFTC(dev.nextftc.v2:robot)는 25323에서 쓰지 않음. 넣어 두면 NextRobot 클래스가 없다는
+    // "No NextFTC robot class found" 오류를 로봇 앱 시작 때마다 낸다.
 
     implementation 'dev.frozenmilk.sinister:Sloth:0.3.2'
     implementation 'com.bylazar.sloth:fullpanels:0.3.2+1.0.13'

@@ -43,6 +43,8 @@ public class Constants {
     /**
      * Pinpoint 위치 센서.
      * 이름 "pinpoint", 4-bar pod 확정. I2C는 Control Hub bus 1 (bus 0은 허브 내장 IMU 자리).
+     * ⚠ 2026-11-21: 좌우(Y) 데드휠 고장, 여분 없음 → Pedro 경로 오토는 쓰지 않음 (opmode/BackupAuto 사용).
+     *   데드휠을 교체하면 Pinpoint Tuner → Foresight Tuner 순서로 다시 진행할 것.
      * TODO(25323): 방향·오프셋은 임시값. Pinpoint Tuner 결과로 교체.
      *  방법: https://pedropathing.com/docs/pathing/tuning/localization/pinpoint
      */
