@@ -28,6 +28,7 @@ import org.firstinspires.ftc.teamcode.robot.Wedge;
  *   D-pad 상 / 하  쐐기 내밀기 / 접기
  *   오른쪽 스틱 X  터렛 돌리기
  *   LB / RB        터렛 천천히 왼쪽 / 오른쪽 (누르는 동안)
+ *   X              터렛 가운데(0°)로 복귀 (피드백 선 + 기어비가 있을 때만. 스틱 움직이면 취소)
  *   Y              슈터 예열 켜기/끄기 (기본 켜짐)
  * </pre>
  */
@@ -46,6 +47,7 @@ public class MainTeleOp extends LinearOpMode {
         Turret turret = new Turret(hardwareMap);
 
         telemetry.addLine("준비 완료. 로봇을 경기장 안쪽(앞)으로 향하게 놓고 START.");
+        if (turret.hasFeedback()) telemetry.addLine("터렛을 가운데(인테이크 방향)에 맞춘 상태에서 INIT 했는지 확인.");
         telemetry.update();
         waitForStart();
 
@@ -93,9 +95,9 @@ public class MainTeleOp extends LinearOpMode {
             if (gamepad2.dpadDownWasPressed()) wedge.retract();
 
             // ── 터렛 ──
-            if (gamepad2.left_bumper) turret.fine(-1);
-            else if (gamepad2.right_bumper) turret.fine(1);
-            else turret.manual(Math.abs(gamepad2.right_stick_x) < 0.05 ? 0 : gamepad2.right_stick_x);
+            if (gamepad2.xWasPressed()) turret.center();
+            int fine = gamepad2.left_bumper ? -1 : gamepad2.right_bumper ? 1 : 0;
+            turret.update(Math.abs(gamepad2.right_stick_x) < 0.05 ? 0 : gamepad2.right_stick_x, fine);
 
             // ── 화면 ──
             telemetry.addData("주행", "%s  방향 %.1f°", drive.isFieldCentric() ? "필드 기준" : "로봇 기준", drive.headingDeg());
@@ -103,7 +105,13 @@ public class MainTeleOp extends LinearOpMode {
                     shooting ? (feeding ? "급탄 중" : "가속 중") : "-", preheat ? "켜짐" : "꺼짐");
             telemetry.addData("블로커", intake.blockerOpen() ? "열림" : "닫힘");
             telemetry.addData("쐐기", wedge.isExtended() ? "내밂" : "접음");
-            telemetry.addData("터렛 파워", "%.2f", turret.power());
+            if (turret.angleKnown()) {
+                telemetry.addData("터렛", "%.1f°  파워 %.2f  %s%s", turret.angleDeg(), turret.power(),
+                        turret.isCentering() ? "가운데로 복귀 중 " : "", turret.atLimit() ? "■ 한계각" : "");
+            } else {
+                telemetry.addData("터렛", "파워 %.2f  (%s)", turret.power(),
+                        turret.hasFeedback() ? "기어비 미입력 → 각도 모름" : "피드백 없음 → 수동만");
+            }
             telemetry.update();
         }
 

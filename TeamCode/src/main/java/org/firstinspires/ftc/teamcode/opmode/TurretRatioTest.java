@@ -5,8 +5,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.robot.HardwareNames;
+import org.firstinspires.ftc.teamcode.robot.Turret;
 
 /**
  * 터렛 기어비 실측 (서보가 몇 바퀴 돌 때 터렛이 1바퀴 도는지).
@@ -34,12 +36,11 @@ public class TurretRatioTest extends LinearOpMode {
     /** 스틱 끝까지 밀었을 때 터렛 파워. 측정은 천천히 해야 정확하다. */
     public static double MAX_POWER = 0.3;
     public static double FINE_POWER = 0.08;
-    /** 피드백 각도가 반대로 쌓이면 true (서보를 +로 돌렸는데 누적 각도가 줄어들 때). 크기에는 영향 없음. */
-    public static boolean FEEDBACK_REVERSED = false;
 
     @Override
     public void runOpMode() {
         CRServo turret = hardwareMap.get(CRServo.class, HardwareNames.TURRET);
+        turret.setDirection(Turret.REVERSED ? DcMotorSimple.Direction.REVERSE : DcMotorSimple.Direction.FORWARD);   // TeleOp과 같은 방향
         AnalogInput feedback = hardwareMap.tryGet(AnalogInput.class, HardwareNames.TURRET_FEEDBACK);
 
         telemetry.addLine("Turret Ratio Test");
@@ -53,6 +54,7 @@ public class TurretRatioTest extends LinearOpMode {
         double servoDeg = 0;              // 방법 1: 누적 서보 각도
         double lastAngle = feedback != null ? angleOf(feedback) : 0;
         double maxStepDeg = 0;            // 한 루프에 가장 많이 돈 각도 (너무 크면 측정이 틀림)
+        double minVolt = Double.POSITIVE_INFINITY, maxVolt = 0;   // 서보 한 바퀴 동안 본 전압 범위
 
         while (opModeIsActive()) {
             // ── 조작 ──
@@ -82,14 +84,19 @@ public class TurretRatioTest extends LinearOpMode {
                 if (step > 180) step -= 360;       // 359° → 1° 처럼 한 바퀴 넘어간 경우
                 if (step < -180) step += 360;
                 lastAngle = angle;
-                servoDeg += FEEDBACK_REVERSED ? -step : step;
+                servoDeg += Turret.FEEDBACK_REVERSED ? -step : step;
                 maxStepDeg = Math.max(maxStepDeg, Math.abs(step));
 
+                double v = feedback.getVoltage();
+                minVolt = Math.min(minVolt, v);
+                maxVolt = Math.max(maxVolt, v);
                 double servoTurns = Math.abs(servoDeg) / 360.0;
                 telemetry.addData("방법 1 (자동)", "");
-                telemetry.addData("  피드백 전압", "%.3f V / %.2f V  (각도 %.1f°)",
-                        feedback.getVoltage(), feedback.getMaxVoltage(), angle);
+                telemetry.addData("  피드백 전압", "%.3f V  (각도 %.1f°)", v, angle);
+                telemetry.addData("  지금까지 최저 / 최고 전압", "%.3f / %.3f V  → Turret.FEEDBACK_MAX_V 를 최고값에 맞출 것 (지금 %.2f)",
+                        minVolt, maxVolt, Turret.FEEDBACK_MAX_V);
                 telemetry.addData("  서보 누적", "%.1f°  = %.3f 바퀴", servoDeg, servoTurns);
+                telemetry.addLine("  확인: 스틱 오른쪽으로 돌릴 때 누적이 늘어야 함. 줄어들면 Turret.FEEDBACK_REVERSED = true");
                 telemetry.addData("  기어비", "%.3f  (터렛 %d바퀴 기준)", servoTurns / turretTurns, turretTurns);
                 if (maxStepDeg > 90) telemetry.addLine("  ⚠ 너무 빨리 돌렸음. A로 다시 시작하고 천천히 돌릴 것");
             }
@@ -105,9 +112,6 @@ public class TurretRatioTest extends LinearOpMode {
         turret.setPower(0);
     }
 
-    /** 피드백 전압 → 서보 각도 (0~360°). */
-    private static double angleOf(AnalogInput in) {
-        double max = in.getMaxVoltage() > 0 ? in.getMaxVoltage() : 3.3;
-        return Math.max(0, Math.min(1, in.getVoltage() / max)) * 360.0;
-    }
+    /** 피드백 전압 → 서보 각도 (0~360°). TeleOp 터렛과 같은 계산 (Turret.FEEDBACK_MAX_V 사용). */
+    private static double angleOf(AnalogInput in) { return Turret.voltageToDeg(in.getVoltage()); }
 }
