@@ -18,7 +18,7 @@ public class StartPose {
     /** INIT: 쐐기를 내리기 시작하고 이 시간(초) 뒤에 터렛을 돌린다. */
     public static double WEDGE_DOWN_DELAY_S = 0.5;
     /** INIT: 터렛을 돌리기 시작하고 이 시간(초) 뒤에 쐐기를 올린다. 터렛이 다 돌기 전에 쐐기가 올라가면 부딪힘. */
-    public static double WEDGE_UP_DELAY_S = 1.0;
+    public static double WEDGE_UP_DELAY_S = 2.0;   // 11/21: 1.0초로는 터렛이 다 못 돌아서 늘림
     /** START: 쐐기를 내리기 시작하고 이 시간(초) 뒤에 터렛을 가운데로 돌린다. */
     public static double TURRET_RETURN_DELAY_S = 0.5;
 
