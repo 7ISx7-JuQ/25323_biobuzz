@@ -43,12 +43,17 @@ public class Turret {
     // ── 위치 모드 값 (0~1, Hardware Check의 터렛 "위치"와 같은 숫자) ──
     /**
      * 터렛이 인테이크 방향(가운데)을 볼 때의 위치.
-     * 2026-11-21 측정: 기본 PWM(600~2400)에서 0.884 → 500~2500 기준으로 환산하면 0.846.
-     * 터렛 기어를 서보 0.500 위치에 맞춰 다시 끼우면(정중앙 맞추기) 0.5 로 바꿀 것.
+     * 2026-11-21: 시작 자세(반시계 90°)를 위해 기어를 비대칭으로 다시 끼움 → 0.268.
+     * 그래서 반시계 쪽(숫자 증가, 0.268→1.0)으로는 많이, 시계 쪽(0.268→0)으로는 적게 돈다.
      */
-    public static double CENTER_POS = 0.846;
-    /** 터렛이 갈 수 있는 끝 위치. 25323은 기구 한계보다 서보 범위가 먼저 끝나므로 서보 전체 범위를 쓴다. */
+    public static double CENTER_POS = 0.268;
+    /** 터렛이 갈 수 있는 끝 위치. 25323은 기구 한계보다 서보 범위가 먼저 끝나므로 서보 전체 범위를 쓴다 (11/21 재확인). */
     public static double MIN_POS = 0.0, MAX_POS = 1.0;
+    /**
+     * 시작 자세(INIT) 위치: 인스펙션 크기 규정 때문에 터렛을 반시계로 90° 돌린 위치 = 서보 끝 1.00 (11/21 측정).
+     * 음수(-1)로 두면 시작 자세 기능이 꺼진다.
+     */
+    public static double INIT_POS = 1.00;
     /** 스틱 끝까지 밀었을 때 1초에 움직이는 위치 양. 0.5 = 1초에 범위의 절반. */
     public static double MOVE_RATE = 0.5;
     /** 정밀 버튼(LB/RB)으로 1초에 움직이는 위치 양. */
@@ -114,6 +119,18 @@ public class Turret {
 
     /** 위치 모드 목표 위치 (0~1). */
     public double targetPosition() { return target; }
+
+    /** 시작 자세 위치가 측정되어 들어가 있는지. */
+    public static boolean initPoseSet() { return POSITION_MODE && INIT_POS >= 0 && INIT_POS <= 1; }
+
+    /** 위치 모드: 목표를 pos 로 정하고 바로 보낸다 (시작 자세 등). */
+    public void goTo(double pos) {
+        if (!POSITION_MODE) return;
+        double lo = Math.min(MIN_POS, MAX_POS), hi = Math.max(MIN_POS, MAX_POS);
+        target = Math.max(lo, Math.min(hi, pos));
+        started = true;
+        servo.setPower(2 * target - 1);
+    }
 
     /** 가운데로 돌아가기. 위치 모드는 즉시 목표를 가운데로, 연속 모드는 스틱을 움직이면 취소된다. */
     public void center() {

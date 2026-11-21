@@ -21,9 +21,12 @@ public class Intake {
     /** 발사할 때 슈터로 밀어 넣는 파워. */
     public static double FEED_POWER = 0.7;
 
-    /** 블로커 열림/닫힘 위치 (0~1, 300° 서보라 0.01 ≈ 3°). 2026-11-21 Hardware Check 측정 (여유 있게 잡은 값). */
+    /**
+     * 블로커 열림/닫힘 위치 (0~1, 300° 서보라 0.01 ≈ 3°).
+     * 2026-11-21: 열림 0.700. 닫힘은 0.500에서 공 4개를 못 잡아서 0.600으로 변경.
+     */
     public static double BLOCKER_OPEN = 0.700;
-    public static double BLOCKER_CLOSED = 0.500;
+    public static double BLOCKER_CLOSED = 0.600;
 
     private final DcMotor motor;
     private final Servo blocker;

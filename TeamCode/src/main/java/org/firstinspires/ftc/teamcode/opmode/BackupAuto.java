@@ -9,7 +9,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.robot.Drive;
 import org.firstinspires.ftc.teamcode.robot.Intake;
 import org.firstinspires.ftc.teamcode.robot.Shooter;
+import org.firstinspires.ftc.teamcode.robot.StartPose;
 import org.firstinspires.ftc.teamcode.robot.Turret;
+import org.firstinspires.ftc.teamcode.robot.Wedge;
 
 /**
  * 25323 대회용 오토 (주차만). 위치 센서 없이 "시간 × 파워"로만 움직인다.
@@ -54,11 +56,19 @@ public class BackupAuto extends LinearOpMode {
         Shooter shooter = new Shooter(hardwareMap);
         Intake intake = new Intake(hardwareMap);
         Turret turret = new Turret(hardwareMap);
+        Wedge wedge = new Wedge(hardwareMap);
 
-        telemetry.addData("발사", SHOOT_PRELOAD ? "함 (급탄 %.1f초)" : "안 함", FEED_TIME_S);
-        telemetry.addData("이동", "앞 %.2f  옆 %.2f  %.1f초 (대기 %.1f초)", DRIVE_FORWARD, DRIVE_STRAFE, DRIVE_TIME_S, START_DELAY_S);
-        telemetry.addLine("값은 Panels에서 바꿀 수 있음. 터렛은 가운데에 맞춰 둘 것.");
-        telemetry.update();
+        // INIT: 시작 자세 (터렛 90° → 쐐기 최대). 오토 동안 그대로 유지하고, TeleOp START 때 풀린다.
+        StartPose pose = new StartPose(turret, wedge);
+        pose.begin();
+        while (opModeInInit()) {
+            pose.initLoop();
+            telemetry.addData("시작 자세", pose.status());
+            telemetry.addData("발사", SHOOT_PRELOAD ? "함 (급탄 %.1f초)" : "안 함", FEED_TIME_S);
+            telemetry.addData("이동", "앞 %.2f  옆 %.2f  %.1f초 (대기 %.1f초)", DRIVE_FORWARD, DRIVE_STRAFE, DRIVE_TIME_S, START_DELAY_S);
+            telemetry.addLine("값은 Panels에서 바꿀 수 있음.");
+            telemetry.update();
+        }
         waitForStart();
         if (isStopRequested()) return;
 

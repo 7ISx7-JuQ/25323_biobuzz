@@ -31,9 +31,35 @@ public class Drive {
     /** 스틱이 이 값보다 작게 움직이면 0으로 본다. */
     public static double STICK_DEADBAND = 0.05;
 
+    // ── 슬루 레이트 리미터 (로봇 약 7.3kg: 급출발·급정거로 미끄러지거나 들리는 것 방지) ──
+    /** 이동: 빨라질 때 1초에 바뀌는 양. 3 = 정지 → 최고속까지 약 0.33초. 크면 민첩, 작으면 부드러움. */
+    public static double MOVE_ACCEL = 3.0;
+    /** 이동: 느려질 때. 멈출 때는 조금 더 빨리 반응하도록 크게. 6 = 최고속 → 정지 약 0.17초. */
+    public static double MOVE_DECEL = 6.0;
+    /** 회전: 빨라질 때 / 느려질 때. */
+    public static double TURN_ACCEL = 4.0, TURN_DECEL = 8.0;
+
+    // ── 회전 조작 ──
+    /** D-pad 좌/우 제자리 회전 파워 (0~1). */
+    public static double DPAD_TURN_POWER = 0.6;
+    /** 오른쪽 스틱을 이만큼 이상 밀어야 "그 방향을 바라봐라"로 본다 (가운데 근처 떨림 무시). */
+    public static double AIM_STICK_MIN = 0.6;
+    /** 방향 맞추기: 각도 오차 1°당 회전 파워. 0.02 = 50° 이상 차이나면 최대 파워. */
+    public static double AIM_KP = 0.02;
+    /** 방향 맞추기 최대 회전 파워. */
+    public static double AIM_MAX_TURN = 0.7;
+    /** 방향 맞추기: 이 오차(°) 안이면 도착으로 본다. */
+    public static double AIM_TOLERANCE_DEG = 2.0;
+    /** 방향 맞추기 최소 회전 파워 (오차가 작아도 바닥 마찰을 이기고 끝까지 돌도록). */
+    public static double AIM_MIN_TURN = 0.06;
+
     private final DcMotor fl, fr, rl, rr;
     private final IMU imu;
     private boolean fieldCentric = true;
+    private final SlewRateLimiter forwardSlew = new SlewRateLimiter();
+    private final SlewRateLimiter strafeSlew = new SlewRateLimiter();
+    private final SlewRateLimiter turnSlew = new SlewRateLimiter();
+    private double aimTargetDeg = Double.NaN;
 
     public Drive(HardwareMap hardwareMap) {
         fl = hardwareMap.get(DcMotor.class, HardwareNames.FRONT_LEFT);
@@ -93,7 +119,60 @@ public class Drive {
         rr.setPower((y + x - turn) / denom * scale);
     }
 
-    public void stop() { drive(0, 0, 0, false); }
+    public void stop() {
+        forwardSlew.reset(0);
+        strafeSlew.reset(0);
+        turnSlew.reset(0);
+        drive(0, 0, 0, false);
+    }
+
+    /**
+     * TeleOp 주행 (드라이버 gamepad1).
+     * - 왼쪽 스틱: 이동 (필드 기준이면 경기장 기준)
+     * - 오른쪽 스틱: 그 방향을 로봇이 바라보도록 회전 ("스틱 방향 바라보기").
+     *   스틱 위 = 시작할 때(또는 OPTIONS 누를 때) 로봇이 보던 쪽, 왼쪽 = 거기서 반시계 90°.
+     *   스틱을 놓으면 그 자리에서 회전을 멈춘다.
+     * - D-pad 좌/우: 제자리 회전 (오른쪽 스틱보다 우선)
+     * 이동·회전 모두 슬루 레이트 리미터를 거친다.
+     *
+     * @param forward  -gamepad.left_stick_y
+     * @param strafe   gamepad.left_stick_x
+     * @param aimX     gamepad.right_stick_x
+     * @param aimY     -gamepad.right_stick_y
+     */
+    public void teleOp(double forward, double strafe, double aimX, double aimY,
+                       boolean dpadLeft, boolean dpadRight, boolean slow) {
+        double turn;
+        aimTargetDeg = Double.NaN;
+        if (dpadLeft || dpadRight) {
+            turn = (dpadRight ? DPAD_TURN_POWER : 0) - (dpadLeft ? DPAD_TURN_POWER : 0);   // + = 시계
+        } else if (Math.hypot(aimX, aimY) >= AIM_STICK_MIN) {
+            aimTargetDeg = Math.toDegrees(Math.atan2(-aimX, aimY));   // 위 = 0°, 왼쪽 = +90° (반시계 +)
+            double error = wrapDeg(aimTargetDeg - headingDeg());
+            if (Math.abs(error) <= AIM_TOLERANCE_DEG) turn = 0;
+            else {
+                turn = clamp(-AIM_KP * error, AIM_MAX_TURN);      // 오차 + (반시계로 가야 함) → turn − (반시계)
+                if (Math.abs(turn) < AIM_MIN_TURN) turn = Math.signum(turn) * AIM_MIN_TURN;
+            }
+        } else {
+            turn = 0;
+        }
+
+        double f = forwardSlew.calculate(deadband(forward), MOVE_ACCEL, MOVE_DECEL);
+        double s = strafeSlew.calculate(deadband(strafe), MOVE_ACCEL, MOVE_DECEL);
+        double t = turnSlew.calculate(turn, TURN_ACCEL, TURN_DECEL);
+        drive(f, s, t, slow);
+    }
+
+    /** 오른쪽 스틱으로 바라보려는 방향 (°). 스틱을 안 밀고 있으면 NaN. */
+    public double aimTargetDeg() { return aimTargetDeg; }
+
+    private static double wrapDeg(double d) {
+        d = Math.IEEEremainder(d, 360);   // -180 ~ 180
+        return d;
+    }
+
+    private static double clamp(double v, double max) { return Math.max(-max, Math.min(max, v)); }
 
     private static double deadband(double v) { return Math.abs(v) < STICK_DEADBAND ? 0 : v; }
 }

@@ -11,16 +11,19 @@ import com.qualcomm.robotcore.hardware.Servo;
  * 상태 3가지 (2026-11-21 Hardware Check 측정):
  *   EXTEND = 내민 위치 (플라워에서 공을 빼올 때)          0.512
  *   SHOOT  = 낮게 접은 위치 (슈터로 발사할 때)            0.577
- *   STOW   = 높게 접은 위치 (평소 이동할 때, 충돌·기동성)  0.595 (가장 위)
+ *   STOW   = 높게 접은 위치 (평소 이동할 때, 충돌·기동성)  0.595 (터렛이 가운데일 때 가장 위)
+ *   INIT   = 시작 자세 (인스펙션 크기 규정)                  0.618 (터렛을 90° 돌렸을 때만 가능한 최대 위치)
+ *            ⚠ 터렛이 가운데일 때 INIT 위치로 가면 부딪힐 수 있다. 반드시 터렛을 먼저 돌린 뒤에 보낼 것.
  * 숫자가 커질수록 접히는 방향이다 (EXTEND 0.512 → SHOOT 0.577 → STOW 0.595).
  */
 @Configurable
 public class Wedge {
-    public enum State { EXTEND, SHOOT, STOW }
+    public enum State { EXTEND, SHOOT, STOW, INIT }
 
     public static double EXTEND = 0.512;
     public static double SHOOT = 0.577;
     public static double STOW = 0.595;
+    public static double INIT = 0.618;
 
     private final Servo servo;
     private State state;
@@ -34,9 +37,9 @@ public class Wedge {
         servo.setPosition(positionOf(s));
     }
 
-    /** 한 단계 더 내밀기: STOW → SHOOT → EXTEND. */
+    /** 한 단계 더 내밀기: (INIT/)STOW → SHOOT → EXTEND. */
     public void stepOut() {
-        if (state == null || state == State.STOW) set(State.SHOOT);
+        if (state == null || state == State.STOW || state == State.INIT) set(State.SHOOT);
         else set(State.EXTEND);
     }
 
@@ -53,6 +56,7 @@ public class Wedge {
         switch (s) {
             case EXTEND: return EXTEND;
             case SHOOT: return SHOOT;
+            case INIT: return INIT;
             default: return STOW;
         }
     }
@@ -62,6 +66,7 @@ public class Wedge {
         switch (s) {
             case EXTEND: return "내밂(빼오기)";
             case SHOOT: return "낮게 접음(발사)";
+            case INIT: return "시작 자세";
             default: return "높게 접음(이동)";
         }
     }

@@ -36,7 +36,7 @@ public class ShooterTuner extends Procedure {
     public void run() throws InterruptedException {
         Inputs in = inputs("Shooter", "슈터 모터 설정과 목표 성능을 입력하세요.");
         Inputs.Field<String> name = in.s("Motor Name").withDefault("shooter");
-        Inputs.Field<Direction> dir = in.e("Motor Direction (Action과 같게)", Direction.class).withDefault(Direction.REVERSE);
+        Inputs.Field<Direction> dir = in.e("Motor Direction (Shooter.REVERSED = true 면 Reversed)", Direction.class).withDefault(Direction.REVERSE);
         Inputs.Field<Double> target = in.d("Target Velocity (ticks/s)").min(100.0).withDefault(1500.0);
         Inputs.Field<Double> tolerance = in.d("Velocity Tolerance (ticks/s)").min(1.0).withDefault(50.0);
         Inputs.Field<Double> overshoot = in.d("Max Overshoot (%)").min(0.0).withDefault(3.0);
@@ -79,9 +79,9 @@ public class ShooterTuner extends Procedure {
         result("Noise σ (ticks/s)", fmt(v.noise));
 
         code(Language.JAVA, String.format(Locale.US,
-                "// KLA/Util/Action.java\n" +
-                "public static double P = %s, I = %s, D = 0.0, F = %s;\n" +
-                "public static double SHOOTING_VELOCITY = %s;",
+                "// robot/Shooter.java (25323)\n" +
+                "public static double P = %s, I = %s, D = 0, F = %s;\n" +
+                "public static double SHOOT_VELOCITY = %s;",
                 fmt(P), fmt(I), fmt(F), fmt(cfg.target)));
     }
 

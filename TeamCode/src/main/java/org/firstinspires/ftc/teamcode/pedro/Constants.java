@@ -25,8 +25,8 @@ import org.firstinspires.ftc.teamcode.robot.HardwareNames;
 public class Constants {
     /**
      * 주행 모터. 포트 이름은 확정(fl, fr, rl, rr).
-     * TODO(25323): 방향은 임시값. 모든 바퀴가 베벨 기어를 거쳐서 25324와 다를 수 있으니
-     *  Mecanum Tuner 결과로 반드시 교체.
+     * 방향은 2026-11-21 Mecanum Tuner 결과 (왼쪽 2개 REVERSE, 오른쪽 2개 FORWARD).
+     * TeleOp(robot/Drive)과 Park Auto도 이 값을 쓴다.
      */
     public static MecanumConfig driveConfig = new MecanumConfig(c -> {
         c.frontLeftName.set(HardwareNames.FRONT_LEFT);
@@ -34,10 +34,10 @@ public class Constants {
         c.frontRightName.set(HardwareNames.FRONT_RIGHT);
         c.backRightName.set(HardwareNames.BACK_RIGHT);
 
-        c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);   // TODO(25323): 튜너 결과
-        c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);    // TODO(25323): 튜너 결과
-        c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);  // TODO(25323): 튜너 결과
-        c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);   // TODO(25323): 튜너 결과
+        c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
+        c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
     });
 
     /**
