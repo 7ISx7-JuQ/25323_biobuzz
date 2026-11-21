@@ -47,9 +47,9 @@ public class ShootParkAuto extends LinearOpMode {
     /** 1구간: 왼쪽 거리 (inch). LOADING ZONE 벽 쪽으로, 터널(HIVE 아래)을 피해 벽에서 30 in 줄로. */
     public static double LEG1_LEFT_IN = 30;
     /** 2구간: 앞(+) 거리 (inch). LOADING ZONE 가까운 쪽 끝에 로봇 절반이 걸치는 높이까지 (먼 쪽은 동맹 자리). 78 미만이면 ZONE 밖. */
-    public static double LEG2_FORWARD_IN = 87;
+    public static double LEG2_FORWARD_IN = 95;
     /** 3구간: 왼쪽 거리 (inch). 벽 쪽으로 붙이되 벽에 닿지 않게 (LEAVE 3점 유지). */
-    public static double LEG3_LEFT_IN = 16;
+    public static double LEG3_LEFT_IN = 24;
 
     @Override
     public void runOpMode() {
